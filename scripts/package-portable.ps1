@@ -5,18 +5,21 @@ Set-Location $root
 
 & "$PSScriptRoot\build-bridge.ps1"
 
-npm --prefix frontend run build
+npx tauri build --no-bundle
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-npm run tauri:build -- --no-bundle
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-$version = (Get-Content "$root\src-tauri\tauri.conf.json" | ConvertFrom-Json).version
+$version = $env:PORTABLE_VERSION
+if ([string]::IsNullOrWhiteSpace($version)) {
+  $version = (Get-Content "$root\src-tauri\tauri.conf.json" | ConvertFrom-Json).version
+  if (-not $version.StartsWith("v")) {
+    $version = "v$version"
+  }
+}
 $releaseDir = Join-Path $root "src-tauri\target\release"
 $portableRoot = Join-Path $root ".build\portable"
 $portableAppDir = Join-Path $portableRoot "AutoGreenBackground"
 $zipOutDir = Join-Path $root "dist-portable"
-$zipName = "AutoGreenBackground-win-x64-v$version-portable.zip"
+$zipName = "AutoGreenBackground-win-x64-$version-portable.zip"
 $zipPath = Join-Path $zipOutDir $zipName
 
 New-Item -ItemType Directory -Force -Path $portableAppDir | Out-Null
