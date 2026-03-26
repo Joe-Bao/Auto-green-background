@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auto Green Background</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        line-height: 1.4;
+        max-width: 1280px;
+      }
+      h2 {
+        margin-bottom: 10px;
+      }
+      h3 {
+        margin: 14px 0 8px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      label {
+        min-width: 120px;
+      }
+      input[type="text"],
+      input[type="number"],
+      select {
+        flex: 1;
+        padding: 6px;
+      }
+      button {
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      .card {
+        border: 1px solid #e2e2e2;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      .cardTitle {
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      .hint {
+        font-size: 12px;
+        color: #555;
+        margin-top: -6px;
+        margin-bottom: 10px;
+      }
+      .tip {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 1px solid #999;
+        border-radius: 999px;
+        text-align: center;
+        line-height: 16px;
+        font-size: 11px;
+        color: #666;
+        cursor: help;
+      }
+      #tooltipPopup {
+        position: fixed;
+        z-index: 9999;
+        background: rgba(32, 32, 32, 0.95);
+        color: #fff;
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        line-height: 1.3;
+        max-width: 260px;
+        pointer-events: none;
+        display: none;
+      }
+      #preview {
+        border: 1px solid #ccc;
+        max-width: 100%;
+        max-height: 420px;
+        object-fit: contain;
+        background: #f8f8f8;
+      }
+      #status {
+        margin-top: 8px;
+        color: #333;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .lang {
+        margin-left: auto;
+        min-width: 120px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(480px, 1fr) minmax(360px, 520px);
+        gap: 14px;
+        align-items: start;
+      }
+      .panel {
+        min-width: 0;
+      }
+      .previewCard {
+        position: sticky;
+        top: 12px;
+      }
+      .previewHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .previewFrame {
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        min-height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        background: #fafafa;
+      }
+      .inlineSwitch {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .summaryBtn {
+        cursor: pointer;
+        user-select: none;
+        list-style: none;
+      }
+      details > summary::-webkit-details-marker {
+        display: none;
+      }
+      .disabledHint {
+        font-size: 12px;
+        color: #8b8b8b;
+        margin: -4px 0 8px 0;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+        .previewCard {
+          position: static;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <h2 id="title" style="margin: 0">Auto Green Background</h2>
+      <select id="language" class="lang">
+        <option value="zh-CN">中文</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+
+    <div class="layout">
+      <div class="panel">
+        <div class="card">
+          <div class="cardTitle" id="ioCardTitle">Input / Output</div>
+          <div class="row">
+            <label for="inputPath" id="labelInput">Input Image</label>
+            <input id="inputPath" type="text" placeholder="Select input image" />
+            <button id="btnInput" type="button">Browse</button>
+          </div>
+          <div class="row">
+            <label for="outputPath" id="labelOutput">Output Image</label>
+            <input id="outputPath" type="text" placeholder="Select output path" />
+            <button id="btnOutput" type="button">Browse</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="previewHeader">
+            <div class="cardTitle" id="basicCardTitle">Basic</div>
+            <label class="inlineSwitch" for="realtimePreviewEnabled">
+              <input id="realtimePreviewEnabled" type="checkbox" checked />
+              <span id="labelRealtimePreview">Realtime Preview</span>
+              <span class="tip" id="tipRealtimePreview">?</span>
+            </label>
+          </div>
+
+          <div class="row">
+            <label for="refineMethod" id="labelRefineMethod">Refine Method</label>
+            <select id="refineMethod">
+              <option value="watershed">watershed</option>
+              <option value="border-grow">border-grow</option>
+              <option value="contour">contour</option>
+              <option value="threshold">threshold</option>
+            </select>
+            <span class="tip" id="tipRefineMethod">?</span>
+          </div>
+          <div class="hint" id="methodHint">Method-specific recommendation will appear here.</div>
+
+          <div class="row">
+            <label for="threshold" id="labelThreshold">Threshold</label>
+            <input id="threshold" type="range" min="0" max="255" value="245" />
+            <input id="thresholdValue" type="number" min="0" max="255" value="245" />
+            <span class="tip" id="tipThreshold">?</span>
+          </div>
+
+          <div class="row">
+            <label for="width" id="labelCanvasSize">Canvas Size</label>
+            <input id="width" type="number" min="1" value="40" />
+            <span>x</span>
+            <input id="height" type="number" min="1" value="40" />
+            <span class="tip" id="tipCanvasSize">?</span>
+          </div>
+
+          <div class="actions">
+            <button id="btnApplyRecommend" type="button">Apply Recommended</button>
+          </div>
+        </div>
+
+        <details id="advancedDetails" class="card">
+          <summary class="summaryBtn" id="advancedSummary">Advanced Parameters</summary>
+          <div style="margin-top: 10px">
+            <div class="row">
+              <label for="morphKernelSize" id="labelMorphKernel">Morph Kernel</label>
+              <input id="morphKernelSize" type="number" min="1" step="2" value="1" />
+              <span class="tip" id="tipMorphKernel">?</span>
+            </div>
+            <div class="row">
+              <label for="contourExpand" id="labelContourExpand">Contour Expand</label>
+              <input id="contourExpand" type="number" min="0" value="0" />
+              <span class="tip" id="tipContourExpand">?</span>
+            </div>
+            <div class="row">
+              <label for="bgTolerance" id="labelBgTolerance">BG Tolerance</label>
+              <input id="bgTolerance" type="number" min="0" value="12" />
+              <span class="tip" id="tipBgTolerance">?</span>
+            </div>
+            <div id="bgToleranceDisabledHint" class="disabledHint"></div>
+          </div>
+        </details>
+
+        <div class="actions">
+          <button id="btnPreview" type="button">Preview</button>
+          <button id="btnProcess" type="button">Process and Save</button>
+        </div>
+      </div>
+
+      <div class="card previewCard">
+        <div class="previewHeader">
+          <div class="cardTitle" id="previewCardTitle">Preview</div>
+        </div>
+        <div id="status"></div>
+        <div class="previewFrame">
+          <img id="preview" alt="preview" />
+        </div>
+      </div>
+    </div>
+    <div id="tooltipPopup"></div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
