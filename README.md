@@ -1,37 +1,75 @@
 # Auto Green Background
 
-Desktop tool for automatic green-screen compositing:
+Desktop app for automatic green-screen compositing with Tauri + Vue + Python image processing.
 
-- Adjustable threshold (`0..255`)
-- Fixed output canvas size (`width x height`)
-- Foreground centered on green background
-- No scaling; center-crop only when foreground exceeds canvas size
+## Features
 
-## Setup (uv)
+- Adjustable segmentation methods: `watershed`, `border-grow`, `contour`, `threshold`
+- Fixed output canvas (`width x height`) with centered foreground
+- Real-time preview with queue/coalescing
+- Built-in tooltip guidance (Chinese/English i18n)
+- Bundled Python runtime (portable package, no Python install required)
+
+## Local Development
+
+### Python environment
 
 ```bash
 uv python install 3.13
 uv sync
 ```
 
-`pywebview` on Windows currently relies on `pythonnet`, so Python 3.14 is not supported yet for GUI mode.
-
-## CI/CD
-
-- CI: GitHub Actions runs unit tests on push and pull requests (`.github/workflows/ci.yml`).
-- CD: pushing a tag like `v0.1.0` triggers release pipeline (`.github/workflows/release.yml`):
-  - run tests
-  - build standalone Windows executable (PyInstaller)
-  - upload `AutoGreenBackground-windows-x64.zip` to GitHub Release
-
-## Run GUI
+### Desktop app (Tauri)
 
 ```bash
-uv run python -m src.app --mode gui
+npm install
+npm --prefix frontend install
+npm run tauri:dev
 ```
 
-## Run CLI
+## Build & Package
+
+### Installer build (MSI/NSIS)
+
+```bash
+npm run tauri:build
+```
+
+### Portable build (recommended for zero-install use)
+
+```bash
+npm run tauri:build:portable
+```
+
+Output:
+
+- `dist-portable/AutoGreenBackground-win-x64-v<version>-portable.zip`
+
+## Performance Notes
+
+- App startup now prewarms the bridge process in background to reduce first-preview latency.
+- Bridge runs in persistent server mode (long connection) instead of spawning process per preview.
+- Fast preview path supports downscale + JPEG preview transfer; final save keeps full-quality pipeline.
+
+## Optional CLI (Python only)
 
 ```bash
 uv run python -m src.app --mode cli --input input.png --output output.png --threshold 250 --width 40 --height 40
+```
+
+## CI/CD
+
+- CI: `.github/workflows/ci.yml`
+  - Python unit tests (Windows + Ubuntu)
+  - Frontend build check
+- CD: `.github/workflows/release.yml` (triggered by tag push `v*`)
+  - Build Windows installer bundles
+  - Build portable zip package
+  - Upload all artifacts to GitHub Release
+
+Tag example:
+
+```bash
+git tag v0.1.1
+git push origin v0.1.1
 ```

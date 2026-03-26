@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  build-windows-exe:
+  build-windows-tauri:
     runs-on: windows-latest
 
     steps:
@@ -31,32 +31,46 @@ jobs:
       - name: Run tests
         run: uv run python -m unittest discover -s tests -p "test_*.py"
 
-      - name: Build standalone EXE
-        shell: pwsh
-        run: |
-          uv run --with pyinstaller pyinstaller `
-            --noconfirm `
-            --clean `
-            --name AutoGreenBackground `
-            --windowed `
-            --add-data "web;web" `
-            main.py
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
 
-      - name: Archive Windows artifact
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path release -Force | Out-Null
-          Compress-Archive -Path dist/AutoGreenBackground/* -DestinationPath release/AutoGreenBackground-windows-x64.zip -Force
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Upload release artifact
+      - name: Install frontend and tauri dependencies
+        run: |
+          npm install
+          npm --prefix frontend install
+
+      - name: Build Tauri app bundle
+        run: npm run tauri:build
+
+      - name: Build portable package
+        run: npm run tauri:build:portable
+
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: AutoGreenBackground-windows-x64
-          path: release/AutoGreenBackground-windows-x64.zip
+          name: tauri-bundles-windows
+          path: src-tauri/target/release/bundle/**
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-portable-windows
+          path: dist-portable/*.zip
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: release/AutoGreenBackground-windows-x64.zip
+          files: |
+            src-tauri/target/release/bundle/**/*
+            dist-portable/*.zip
           generate_release_notes: true

@@ -21,7 +21,9 @@ venv/
 
 # Build / packaging artifacts
 build/
+.build/
 dist/
+dist-portable/
 build-exe/
 dist-exe/
 release/
@@ -29,6 +31,9 @@ release/
 *.toc
 *.pkg
 xref-*.html
+target/
+src-tauri/bin/
+src-tauri/gen/
 *.egg-info/
 *.egg
 
@@ -39,9 +44,17 @@ xref-*.html
 *.swp
 *.swo
 
+# Node / frontend artifacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
 # OS files
 .DS_Store
 Thumbs.db
 
 # Logs
 *.log
+
+# Archives
+*.zip

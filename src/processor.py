@@ -161,10 +161,11 @@ def center_foreground_on_canvas(
     y_min, y_max = ys.min(), ys.max()
     x_min, x_max = xs.min(), xs.max()
 
-    alpha = (mask.astype(np.float32) / 255.0)[:, :, None]
-    bg = np.full_like(img_color, color)
-    fg_full = (img_color.astype(np.float32) * alpha + bg.astype(np.float32) * (1.0 - alpha)).astype(img_color.dtype)
-    fg = fg_full[y_min : y_max + 1, x_min : x_max + 1]
+    roi_color = img_color[y_min : y_max + 1, x_min : x_max + 1]
+    roi_mask = mask[y_min : y_max + 1, x_min : x_max + 1]
+    alpha = (roi_mask.astype(np.float32) / 255.0)[:, :, None]
+    bg_color = np.array(color, dtype=np.float32).reshape(1, 1, 3)
+    fg = (roi_color.astype(np.float32) * alpha + bg_color * (1.0 - alpha)).astype(img_color.dtype)
 
     fg_h, fg_w = fg.shape[:2]
     if fg_h > target_height:
@@ -192,16 +193,27 @@ def process_image_array(
     morph_kernel_size: int = 1,
     contour_expand: int = 0,
     bg_tolerance: int = 12,
+    fast_preview: bool = False,
+    preview_max_side: int = 0,
 ) -> np.ndarray:
     if img_color.ndim != 3 or img_color.shape[2] != 3:
         raise ValueError("input image must be a BGR color image")
 
-    img_gray = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
-    mask = create_binary_mask(img_gray, threshold)
+    work_img = img_color
+    if fast_preview and preview_max_side > 0:
+        h, w = img_color.shape[:2]
+        max_side = max(h, w)
+        if max_side > preview_max_side:
+            scale = float(preview_max_side) / float(max_side)
+            new_w = max(1, int(round(w * scale)))
+            new_h = max(1, int(round(h * scale)))
+            work_img = cv2.resize(img_color, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+    img_gray = cv2.cvtColor(work_img, cv2.COLOR_BGR2GRAY)
     method = refine_method.strip().lower()
     if method == "watershed":
         mask = create_watershed_mask(
-            img_color=img_color,
+            img_color=work_img,
             img_gray=img_gray,
             threshold=threshold,
             bg_tolerance=bg_tolerance,
@@ -213,25 +225,29 @@ def process_image_array(
             contour_expand=contour_expand,
         )
     elif method == "border-grow":
-        mask = create_border_grow_mask(img_gray, background_threshold=threshold)
+        max_iter = 1024 if fast_preview else 4096
+        mask = create_border_grow_mask(
+            img_gray, background_threshold=threshold, max_iterations=max_iter
+        )
         mask = refine_mask_with_main_contour(
             mask,
             morph_kernel_size=morph_kernel_size,
             contour_expand=contour_expand,
         )
     elif method == "contour":
+        mask = create_binary_mask(img_gray, threshold)
         mask = refine_mask_with_main_contour(
             mask,
             morph_kernel_size=morph_kernel_size,
             contour_expand=contour_expand,
         )
     elif method == "threshold":
-        pass
+        mask = create_binary_mask(img_gray, threshold)
     else:
         raise ValueError("refine method must be one of: threshold, contour, watershed, border-grow")
 
     return center_foreground_on_canvas(
-        img_color=img_color,
+        img_color=work_img,
         mask=mask,
         target_width=target_width,
         target_height=target_height,
@@ -250,6 +266,8 @@ def process_image_file(
     morph_kernel_size: int = 1,
     contour_expand: int = 0,
     bg_tolerance: int = 12,
+    fast_preview: bool = False,
+    preview_max_side: int = 0,
 ) -> np.ndarray:
     src = Path(input_path)
     if not src.exists():
@@ -269,6 +287,8 @@ def process_image_file(
         morph_kernel_size=morph_kernel_size,
         contour_expand=contour_expand,
         bg_tolerance=bg_tolerance,
+        fast_preview=fast_preview,
+        preview_max_side=preview_max_side,
     )
 
     dst = Path(output_path)

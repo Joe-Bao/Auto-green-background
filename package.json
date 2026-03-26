@@ -1,0 +1,14 @@
+{
+  "name": "auto-green-background-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "bridge:build": "powershell -ExecutionPolicy Bypass -File ./scripts/build-bridge.ps1",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "npm run bridge:build && tauri build",
+    "tauri:build:portable": "powershell -ExecutionPolicy Bypass -File ./scripts/package-portable.ps1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Auto Green Background",
+  "version": "0.1.0",
+  "identifier": "com.joebao.autogreenbackground",
+  "build": {
+    "beforeDevCommand": "npm --prefix frontend run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm --prefix frontend run build",
+    "frontendDist": "../frontend/dist"
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.ico",
+      "icons/icon.png",
+      "icons/128x128.png",
+      "icons/32x32.png"
+    ],
+    "resources": [
+      "bin/bridge",
+      "../tauri_bridge.py",
+      "../src"
+    ]
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Auto Green Background",
+        "width": 1200,
+        "height": 820,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  }
+}
