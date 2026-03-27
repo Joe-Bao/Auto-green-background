@@ -1,25 +1,28 @@
 # Auto Green Background
 
-Desktop app for automatic green-screen compositing with Tauri + Vue + Python image processing.
+[English README](./README.en.md)
 
-## Features
+基于 `Tauri + Vue + Python(OpenCV)` 的自动绿幕工具。  
+输入素材图后，自动分割主体并输出固定画布大小的绿色背景图，适配模板匹配等场景。
 
-- Adjustable segmentation methods: `watershed`, `border-grow`, `contour`, `threshold`
-- Fixed output canvas (`width x height`) with centered foreground
-- Real-time preview with queue/coalescing
-- Built-in tooltip guidance (Chinese/English i18n)
-- Bundled Python runtime (portable package, no Python install required)
+## 功能特性
 
-## Local Development
+- 支持多种分割算法：`watershed` / `border-grow` / `contour` / `threshold`
+- 输出固定尺寸画布（`width x height`），主体自动居中
+- 实时预览，带请求合并与节流，避免频繁卡顿
+- 中英文界面与参数 tooltip（hover + click）
+- 自带 Python 运行时与依赖（便携包开箱即用，无需本机安装 Python）
 
-### Python environment
+## 本地开发
+
+### 1) Python 环境
 
 ```bash
 uv python install 3.13
 uv sync
 ```
 
-### Desktop app (Tauri)
+### 2) 前端与桌面端
 
 ```bash
 npm install
@@ -27,31 +30,31 @@ npm --prefix frontend install
 npm run tauri:dev
 ```
 
-## Build & Package
+## 构建与打包
 
-### Installer build (MSI/NSIS)
-
-```bash
-npm run tauri:build
-```
-
-### Portable build (recommended for zero-install use)
+### 便携包（推荐）
 
 ```bash
 npm run tauri:build:portable
 ```
 
-Output:
+产物路径：
 
 - `dist-portable/AutoGreenBackground-win-x64-v<version>-portable.zip`
 
-## Performance Notes
+说明：
 
-- App startup now prewarms the bridge process in background to reduce first-preview latency.
-- Bridge runs in persistent server mode (long connection) instead of spawning process per preview.
-- Fast preview path supports downscale + JPEG preview transfer; final save keeps full-quality pipeline.
+- `<version>` 默认取 `src-tauri/tauri.conf.json` 的版本号
+- 在 CI/CD 中会跟随 tag（例如 `v0.1.0`）
 
-## Optional CLI (Python only)
+## 性能优化说明
+
+- 应用启动时会后台预热 bridge 子进程，降低首帧预览冷启动延迟
+- Rust 与 Python 之间使用长连接（持久 bridge），不再每次预览新起进程
+- 预览路径支持快速模式（下采样 + JPEG 传输），导出仍保持完整质量
+- Windows 下后台 bridge 进程隐藏 cmd 窗口
+
+## 可选 CLI（Python）
 
 ```bash
 uv run python -m src.app --mode cli --input input.png --output output.png --threshold 250 --width 40 --height 40
@@ -59,15 +62,14 @@ uv run python -m src.app --mode cli --input input.png --output output.png --thre
 
 ## CI/CD
 
-- CI: `.github/workflows/ci.yml`
-  - Python unit tests (Windows + Ubuntu)
-  - Frontend build check
-- CD: `.github/workflows/release.yml` (triggered by tag push `v*`)
-  - Build Windows installer bundles
-  - Build portable zip package
-  - Upload all artifacts to GitHub Release
+- CI：`.github/workflows/ci.yml`
+  - Python 单元测试（Windows + Ubuntu）
+  - 前端构建检查
+- CD：`.github/workflows/release.yml`（`v*` tag 触发）
+  - 构建 portable zip
+  - 上传到 GitHub Release
 
-Tag example:
+发版示例：
 
 ```bash
 git tag v0.1.1
